@@ -1,9 +1,8 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect } from "react";
-import Link from "next/link";
-import P5Sketch from "./components/P5Sketch";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ColorWheel from "./components/ColorWheel";
+import P5Sketch from "./components/P5Sketch";
 
 export default function DrawPage() {
   // Brush state
@@ -235,8 +234,35 @@ export default function DrawPage() {
             background: "#000",
           }}
         >
+
+          {/* Brush size slider */}
+          <div className="flex flex-col items-center text-white w-full mb-4">
+            <label htmlFor="brushSizeSlider" className="mb-1">
+              Brush Size: {brushSize}
+            </label>
+            <input
+              id="brushSizeSlider"
+              type="range"
+              min="1"
+              max="100"
+              value={brushSize}
+              onChange={(e) => handleSizeChange(Number(e.target.value))}
+              style={{
+                width: "80%",
+                cursor: "pointer",
+                accentColor: "#00ff99",
+                // Remove default appearance for Chrome/Safari
+                WebkitAppearance: "none",
+                height: "12px",
+                borderRadius: "6px",
+                border: "2px solid #00ff99", // outline
+                background: `linear-gradient(to right, #00ff99 0%, #00ff99 ${brushSize}%, #222 ${brushSize}%, #222 100%)`,
+              }}
+            />
+          </div>
+
+  {/*}
           <div className="flex flex-row items-center justify-evenly w-full">
-            {/* Brush Sizes */}
           {[5, 10, 20, 40].map((s) => (
             <button
               key={s}
@@ -251,6 +277,7 @@ export default function DrawPage() {
             />
           ))}
           </div>
+  */}
           {/* Undo/Redo */}
           <div className="w-full flex flex-row items-center justify-center">
             <button
