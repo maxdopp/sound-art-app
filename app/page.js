@@ -33,6 +33,35 @@ export default function DrawPage() {
     fetchDrawings();
   }, []);
 
+  // Global key handler for undo (Ctrl/Cmd+Z)
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      // Support Ctrl+Z on Windows/Linux and Cmd+Z on macOS
+      if ((e.ctrlKey || e.metaKey) && e.key && e.key.toLowerCase() === "z") {
+        // Prevent browser's default undo
+        e.preventDefault();
+        if (p5Ref.current && typeof p5Ref.current.undo === "function") {
+          p5Ref.current.undo();
+        } else {
+          // Optional: helpful debug if undo isn't available yet
+          console.log('[keydown] undo requested but p5Ref.current.undo not available');
+        }
+      }else if ((e.ctrlKey || e.metaKey) && e.key && e.key.toLowerCase() === "y") {
+        // Prevent browser's default undo
+        e.preventDefault();
+        if (p5Ref.current && typeof p5Ref.current.undo === "function") {
+          p5Ref.current.redo();
+        } else {
+          // Optional: helpful debug if undo isn't available yet
+          console.log('[keydown] undo requested but p5Ref.current.undo not available');
+        }
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   //define synths
   const synthsRef = useRef(null);
     
@@ -211,19 +240,7 @@ export default function DrawPage() {
 
     p.keyPressed = async () => {
       if (p.key === "s") {
-        const filename = `drawing-${Date.now()}.json`;
-        const res = await fetch("/api/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ strokes: strokesRef.current, filename }),
-        });
-        if (res.ok) {
-          alert("Drawing saved!");
-          const updated = await fetch("/api/drawing");
-          setDrawings(await updated.json());
-        } else {
-          alert("Error saving drawing.");
-        }
+        p.saveJSON();
       }
       else if (p.key === "u"){
         p.undo();
@@ -232,6 +249,22 @@ export default function DrawPage() {
         p.redo();
       }
     };
+
+    p.saveJSON = async () => {
+      const filename = `drawing-${Date.now()}.json`;
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ strokes: strokesRef.current, filename }),
+      });
+      if (res.ok) {
+        alert("Drawing saved!");
+        const updated = await fetch("/api/drawing");
+        setDrawings(await updated.json());
+      } else {
+        alert("Error saving drawing.");
+      }
+    }
 
     p.loadDrawing = async (filename) => {
       try {
@@ -347,7 +380,8 @@ export default function DrawPage() {
   return (
     <div className="flex flex-row">
       {/* Toolbar */}
-      <div className="flex flex-col">
+      <div className="flex flex-col justify-start px-6">
+        <h1 className="text-4xl font-bold text-center my-10">SoundBrush</h1>
         <ColorWheel onColorChange={handleColorChange} />
         <div
           style={{
@@ -362,7 +396,7 @@ export default function DrawPage() {
         >
 
           {/* Brush size slider */}
-          <div className="flex flex-col items-center text-white w-full mb-4">
+          <div className="flex flex-col items-center text-white w-full mb-1">
             <label htmlFor="brushSizeSlider" className="mb-1">
               Brush Size: {brushSize}
             </label>
@@ -408,36 +442,53 @@ export default function DrawPage() {
           <div className="w-full flex flex-row items-center justify-center">
             <button
               style={{
-                borderRadius: "20%",
+                borderRadius: "50%",
                 background: "white",
                 color: "black",
-                padding: "5px"
+                padding: "5px",
+                margin: "0px 10px",
+                width: "50px",
+                height: "50px"
               }}
               name="undo"
               onClick={handleUndo}
-            >Undo</button>
+            >{"<"}</button>
             <button
             style={{
-                borderRadius: "20%",
+                borderRadius: "50%",
                 background: "white",
                 color: "black",
-                padding: "5px"
+                padding: "5px",
+                margin: "0px 10px",
+                width: "50px",
+                height: "50px"
               }}
               name="redo"
               onClick={handleRedo}
-            >Redo</button>
+            >{">"}</button>
           </div>
-          {/* Clear Button */}
-          <button
-            style={{ padding: "5px 10px", marginLeft: 20, background: "white", color: "black"}}
-            onClick={() => {
-              if (p5Ref.current) p5Ref.current.background(255);
-              strokesRef.current = [];
-              undosRef.current = [];
-            }}
-          >
-            Clear
-          </button>
+          {/* Clear Button and Save Button*/}
+          <div>
+            <button
+              style={{ borderRadius: "20%", padding: "5px 10px", margin: "0px 10px", background: "white", color: "black"}}
+              onClick={() => {
+                if (p5Ref.current) p5Ref.current.background(255);
+                strokesRef.current = [];
+                undosRef.current = [];
+              }}
+            >
+              Clear
+            </button>
+            <button
+              style={{ borderRadius: "20%", padding: "5px 10px", margin: "0px 10px", background: "white", color: "black"}}
+              onClick={() => {
+                if (p5Ref.current) p5Ref.current.saveJSON();
+              }}
+            >
+              Save
+            </button>
+          </div>
+          
           {/* Dropdown to load saved drawings */}
           <select
             className="text-black bg-white p-1 mb-2"

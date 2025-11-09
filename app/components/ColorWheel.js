@@ -5,7 +5,8 @@ export default function ColorWheel({ onColorChange }) {
   const canvasRef = useRef(null);
   const [selectedHue, setSelectedHue] = useState(0);
   const [lightness, setLightness] = useState(0.5);
-  const [selectedColor, setSelectedColor] = useState("#ff0000");
+  const [saturation, setSaturation] = useState(1);
+  const [selectedColor, setSelectedColor] = useState("#000000");
   const [markerPos, setMarkerPos] = useState(null);
 
   const CSS_SIZE = 300;
@@ -80,7 +81,7 @@ export default function ColorWheel({ onColorChange }) {
     const angle = Math.atan2(y, x) * (180 / Math.PI) + 180;
     setSelectedHue(angle);
   
-    const [r, g, b] = hslToRgb(angle / 360, 1, lightness);
+    const [r, g, b] = hslToRgb(angle / 360, saturation, lightness);
     const hex = rgbToHex(r, g, b);
   
     setSelectedColor(hex);
@@ -94,9 +95,21 @@ export default function ColorWheel({ onColorChange }) {
     const newL = parseFloat(e.target.value);
     setLightness(newL);
   
-    const [r, g, b] = hslToRgb(selectedHue / 360, 1, newL);
+    const [r, g, b] = hslToRgb(selectedHue / 360, saturation, newL);
     const hex = rgbToHex(r, g, b);
   
+    setSelectedColor(hex);
+    setColorName(getColorName(selectedHue));
+    onColorChange?.(hex);
+  };
+
+  const handleSaturationChange = (e) => {
+    const newS = parseFloat(e.target.value);
+    setSaturation(newS);
+
+    const [r, g, b] = hslToRgb(selectedHue / 360, newS, lightness);
+    const hex = rgbToHex(r, g, b);
+
     setSelectedColor(hex);
     setColorName(getColorName(selectedHue));
     onColorChange?.(hex);
@@ -135,8 +148,8 @@ export default function ColorWheel({ onColorChange }) {
       </div>
 
       {/* Lightness Slider */}
-      <div style={{ width: 260, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-        <label>Saturation</label>
+      <div style={{ width: 260, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, marginTop: "20px" }}>
+        <label>Lightness</label>
         <input
           type="range"
           min="0"
@@ -155,6 +168,30 @@ export default function ColorWheel({ onColorChange }) {
             border: `2px solid ${selectedColor}`, // outline
             backgroundImage: "linear-gradient(to right, #000000, #ffffff)"
             }}
+        />
+      </div>
+
+      {/* Saturation Slider */}
+      <div style={{ width: 260, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, marginBottom: "20px"
+      }}>
+        <label>Saturation</label>
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value={saturation}
+          onChange={handleSaturationChange}
+          style={{
+            width: "80%",
+            cursor: "pointer",
+            accentColor: selectedColor,
+            WebkitAppearance: "none",
+            height: "12px",
+            borderRadius: "6px",
+            border: `2px solid ${selectedColor}`,
+            backgroundImage: `linear-gradient(to right, hsl(${selectedHue}, 0%, 50%), hsl(${selectedHue}, 100%, 50%))`
+          }}
         />
       </div>
 
